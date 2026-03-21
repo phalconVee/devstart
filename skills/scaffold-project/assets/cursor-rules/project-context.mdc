@@ -1,0 +1,19 @@
+---
+description: Project context. Always loaded for every conversation.
+alwaysApply: true
+---
+Read @PRD.md before starting any task. It contains the mission,
+tech stack, data model, features, acceptance criteria, and conventions.
+
+Read @CLAUDE.md for repo structure, key commands, and deployment config.
+
+If a /mockups directory exists with design files, check the relevant
+mockup before building or modifying any UI component. Match the mockup
+layout and visual hierarchy.
+
+When starting a new feature, first identify which Feature section in
+the PRD it corresponds to. Follow its acceptance criteria as your
+definition of done.
+
+Always follow the conventions listed in PRD.md. If a convention
+conflicts with your default behavior, the PRD wins.

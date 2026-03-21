@@ -7,6 +7,10 @@ description: >
   fully configured project folder. Generates Cursor rules, CLAUDE.md, deployment
   config, and installs relevant stack-specific skills. Supports Laravel, Next.js,
   React Native, React+Vite+TypeScript, Node/Express/TypeScript, and Django.
+allowed-tools:
+  - Bash
+  - Read
+  - Write
 ---
 
 # DevStart: PRD-Driven Project Scaffolding
@@ -26,6 +30,17 @@ config, and agent context — ready to open in Cursor and build.
    at minimum: project name, tech stack, and a description of features.
 2. **Mockups** (optional): Figma exports, PNGs, or HTML files in a /mockups directory.
 
+If the user provides a PRD inline rather than as a file, first write it to a
+PRD.md file before proceeding.
+
+## Standalone Script
+
+A bash script at `scripts/scaffold.sh` can also perform this scaffolding
+outside of an agent session. Usage:
+```bash
+./scripts/scaffold.sh <project-name> <path/to/PRD.md> [path/to/mockups/]
+```
+
 ## Process
 
 ### Step 1: Analyze the PRD
@@ -35,20 +50,37 @@ Read the PRD and extract:
 - **Tech stack**: Detect the primary framework from the Tech Stack section
 - **Database**: What DB is used (Postgres, MySQL, SQLite, MongoDB, etc.)
 - **Auth method**: Breeze, NextAuth, Passport, Django auth, etc.
-- **Deployment target**: Railway, Vercel, Fly, AWS, etc.
+- **Deployment target**: Railway, Vercel, Fly, AWS, EAS, etc.
 - **Data model**: All models with fields, types, relationships
 - **Features list**: Each feature with routes, views, acceptance criteria
 - **Conventions**: Coding standards the user defined
 
-Map the tech stack to one of the supported stacks:
-- `laravel` — PHP/Laravel detected → load `references/stack-laravel.md`
-- `nextjs` — Next.js detected → load `references/stack-nextjs.md`
-- `react-native` — React Native / Expo detected → load `references/stack-react-native.md`
-- `react-vite` — React + Vite + TypeScript detected → load `references/stack-react-vite.md`
-- `node-express` — Node/Express/TypeScript detected → load `references/stack-node-express.md`
-- `django` — Python/Django detected → load `references/stack-django.md`
+**Stack detection priority order** (check top to bottom, first match wins):
 
-If unsure, ask the user which stack to use.
+1. `react-native` — PRD contains: React Native, Expo, mobile app, cross-platform mobile
+2. `nextjs` — PRD contains: Next.js, NextJS, App Router, Server Components
+3. `laravel` — PRD contains: Laravel, Artisan, Eloquent, Blade, Breeze, Livewire
+4. `django` — PRD contains: Django, DRF, Django REST Framework
+5. `node-express` — PRD contains: Express, Fastify, Node.js API/backend/server
+6. `react-vite` — PRD contains: React + Vite, React SPA, or just React (without Next.js/Expo)
+
+**Why this order matters:**
+- "React Native" contains "React" — must match react-native before react-vite.
+- "Next.js with React" — must match nextjs before react-vite.
+- If PRD mentions both a frontend and backend stack (e.g., "React + Express"),
+  detect the PRIMARY stack and note the secondary in CLAUDE.md. Ask the user
+  if you should scaffold a monorepo.
+
+**Deploy target detection** (independent of stack):
+- "Vercel" in PRD → vercel
+- "Railway" in PRD → railway
+- "Fly" / "Fly.io" in PRD → fly
+- "EAS" / "Expo Application Services" in PRD → eas
+- Default: railway (unless stack is react-native → eas, or nextjs → vercel)
+
+If unsure about either stack or deploy target, ask the user.
+
+Load the matching reference: `references/stack-<detected-stack>.md`
 
 ### Step 2: Create the Project Directory
 
@@ -56,11 +88,12 @@ Create the project folder with this structure:
 
 ```
 <project-name>/
-├── PRD.md                          # User's PRD (copied in)
+├── PRD.md                          # User's PRD (copied in verbatim)
 ├── CLAUDE.md                       # Agent context (generated)
 ├── AGENTS.md                       # Symlink → CLAUDE.md
 ├── .env.example                    # Env var template (stack-specific)
 ├── .gitignore                      # Stack-appropriate ignores
+├── .cursorignore                   # Exclude vendor/build/env from Cursor indexing
 ├── mockups/                        # User's mockups (if provided)
 ├── .cursor/
 │   └── rules/
@@ -68,75 +101,93 @@ Create the project folder with this structure:
 │       ├── stack-conventions.mdc   # Auto-attach on source files
 │       ├── deployment.mdc          # Auto-attach on deploy config
 │       └── testing.mdc             # Auto-attach on test files
-└── <deploy-dir>/                   # e.g., railway/, vercel.json, Dockerfile
+└── <deploy-dir>/                   # e.g., railway/, vercel.json, eas.json
 ```
 
 ### Step 3: Generate CLAUDE.md
 
-Use this template, filled in from PRD analysis:
+Read the template at `assets/claude-md-template.md`. Fill in all `{{PLACEHOLDER}}`
+fields with values extracted from the PRD:
 
-```markdown
-# Project Context
+- `{{STACK}}` — detected stack name
+- `{{DEPLOY_TARGET}}` — detected deploy target
+- `{{MOCKUP_COUNT}}` — number of files in mockups/ (0 if none)
+- `{{DATA_MODEL}}` — paste the Data Model section from the PRD verbatim
+- `{{KEY_COMMANDS}}` — from the stack reference's "Key Commands" section
+- `{{CONVENTIONS}}` — paste the Conventions section from the PRD verbatim
+- `{{DEPLOY_DIR}}` — railway/, or . for vercel.json/eas.json at root
+- `{{DEPLOYMENT_NOTES}}` — brief summary of deploy architecture from reference
 
-## Quick Reference
-- **PRD**: See PRD.md for full requirements
-- **Stack**: [detected stack]
-- **Deploy target**: [detected target]
-- **Mockups**: [count] files in /mockups
-
-## Data Model
-[Paste the data model section from the PRD here verbatim — this is the
-most commonly referenced section during development]
-
-## Key Commands
-[Stack-specific commands: dev server, test, build, deploy, migrate]
-
-## Conventions
-[Paste conventions from PRD here verbatim]
-```
+Create AGENTS.md as a symlink to CLAUDE.md for Codex/OpenCode compatibility.
 
 ### Step 4: Generate Cursor Rules
 
-Read the appropriate cursor rules template from `assets/cursor-rules/` for the
-detected stack. Generate these .mdc files:
+Generate four .mdc files in `.cursor/rules/`:
 
 **project-context.mdc** (always applies):
-```yaml
----
-description: Project context. Always loaded for every conversation.
-alwaysApply: true
----
-```
-Content: Instruct agent to read @PRD.md and @CLAUDE.md before any task.
-If mockups/ exists, instruct agent to check mockups before building UI.
+Copy from `assets/cursor-rules/project-context.mdc`. If no mockups directory
+exists, remove the mockup-related lines from the copied file.
 
 **stack-conventions.mdc** (auto-attached by glob):
-Read from `references/stack-<name>.md` for the conventions content.
-Set the `globs` field to match the stack's source file extensions.
+Read the detected stack's reference file at `references/stack-<n>.md`.
+Extract the `stack-conventions.mdc` section — it contains the exact YAML
+frontmatter (with correct `globs` for that stack's file extensions) and
+the conventions content. Generate the .mdc file from this.
 
 **deployment.mdc** (auto-attached by glob on deploy config files):
-Read from `references/stack-<name>.md` for deployment instructions.
+Read the detected stack's reference file. Extract the `deployment.mdc` section.
+Set deploy target name in the content. Use these globs:
+```yaml
+globs:
+  - "railway/**"
+  - "Dockerfile"
+  - "vercel.json"
+  - "railway.toml"
+  - "Procfile"
+  - "eas.json"
+  - ".env*"
+```
 
 **testing.mdc** (auto-attached by glob on test files):
-Read from `references/stack-<name>.md` for testing patterns.
+Read the detected stack's reference file. Extract the `testing.mdc` section
+with the correct test file globs for that stack.
 
-### Step 5: Generate Deployment Config
+### Step 5: Generate .cursorignore
 
-Read the deploy config template from `assets/deploy-configs/` for the
-detected stack and deployment target. Generate the actual files.
+Read `assets/cursorignore-templates.md` and extract the ignore patterns for
+the detected stack. Write them to `.cursorignore` in the project root. This
+prevents Cursor from indexing vendor dirs, build output, and env files.
 
-For Railway + Laravel: `railway/init-app.sh`, `railway/run-worker.sh`, `railway/run-cron.sh`
-For Railway + Node: `Dockerfile` or `railway.toml`
-For Vercel + Next.js: `vercel.json`
-For Railway + Django: `railway/start.sh` with gunicorn config
-See the stack-specific reference for exact file contents.
+### Step 6: Generate Deployment Config
 
-### Step 6: Generate .env.example
+Read the detected stack's reference file at `references/stack-<n>.md`.
+It contains the exact file contents for each deployment config file under
+the "Deployment Config Files" heading. Generate those files verbatim.
 
-Stack-specific env var template. Include all vars needed for the deployment
-target with placeholder values and comments explaining each.
+**Stack + deploy target mapping:**
+- Laravel + Railway: `railway/init-app.sh`, `railway/run-worker.sh`, `railway/run-cron.sh`
+- Next.js + Vercel: `vercel.json`
+- Next.js + Railway: `railway.toml`
+- React + Vite + Railway: `railway.toml`
+- Node/Express + Railway: `railway.toml` (or `Dockerfile` — both in reference)
+- Django + Railway: `railway/start.sh` (+ optional `Dockerfile`)
+- React Native + EAS: `eas.json`
 
-### Step 7: Initialize Git
+If the PRD specifies a deploy target not listed above, generate a minimal
+config and note it in CLAUDE.md. Do NOT guess at deploy configs.
+
+### Step 7: Generate .env.example
+
+Read the `.env.example` content from the stack reference's "Deployment Config
+Files" section. Write it to `.env.example` in the project root. Include
+comments explaining each variable.
+
+### Step 8: Generate .gitignore
+
+Read the `.gitignore` content from the stack reference. Write it to the
+project root.
+
+### Step 9: Initialize Git
 
 ```bash
 git init
@@ -144,23 +195,48 @@ git add -A
 git commit -m "chore: scaffold project from PRD via devstart"
 ```
 
-### Step 8: Report to User
+### Step 10: Report to User
 
 Print a summary:
-- Project name and directory
-- Detected stack
-- Generated files list
-- Installed skills
-- Suggested first command (e.g., "open in Cursor: cursor <project>/")
-- Suggested first prompt to give the agent
+- Project name and path
+- Detected stack and deploy target
+- List of all generated files
+- Suggested next step: `cursor <project-name>/`
+- Suggested first prompt to give the Cursor agent:
+
+> Read @PRD.md and @CLAUDE.md. Set up the project based on the PRD:
+> install dependencies, create the data model, and run the initial
+> migration. Verify everything works by running tests.
+
+## Monorepo Handling (React Native + API)
+
+If the stack is `react-native` AND the PRD describes a backend API, scaffold
+a monorepo:
+
+```
+project/
+├── apps/
+│   ├── mobile/        # React Native (scaffold with react-native reference)
+│   └── api/           # Backend API (scaffold with the detected backend reference)
+├── packages/          # Shared types/utils (create empty with README)
+├── PRD.md
+├── CLAUDE.md
+└── .cursor/rules/     # Rules for both stacks, scoped by glob
+```
+
+Generate cursor rules for BOTH stacks with globs scoped to their subdirectories
+(e.g., `apps/mobile/**/*.tsx` and `apps/api/**/*.ts`). Generate separate deploy
+configs for each app.
 
 ## Important Notes
 
 - **SKILL.md is lean by design.** Detailed stack conventions, deployment configs,
-  and cursor rule templates are in `references/` and `assets/`. Load them only
-  when the stack is detected.
+  and cursor rule templates live in `references/` and `assets/`. Load them only
+  when the stack is detected. This follows progressive disclosure.
 - **Don't over-scaffold.** Generate config and context files. Do NOT generate
   application source code — that's what the user does in Cursor after opening.
 - **Mockups are optional.** If no mockups directory exists, skip all mockup
   references in generated files.
 - **The PRD is sacred.** Copy it in verbatim. Never modify the user's PRD.
+- **Ask when ambiguous.** If the PRD mentions two frameworks or an unsupported
+  deploy target, ask rather than guess.
