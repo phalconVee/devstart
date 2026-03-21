@@ -1,0 +1,14 @@
+{
+  "name": "devstart",
+  "version": "1.0.0",
+  "description": "PRD-driven project scaffolding. Provide a PRD, get a fully configured project with Cursor rules, agent skills, deployment config, and project context. Supports Laravel, Next.js, React Native, React+Vite, Node/Express/TypeScript, and Django.",
+  "skills": [
+    "skills/scaffold-project",
+    "skills/stack-laravel",
+    "skills/stack-nextjs",
+    "skills/stack-react-native",
+    "skills/stack-react-vite",
+    "skills/stack-node-express",
+    "skills/stack-django"
+  ]
+}
