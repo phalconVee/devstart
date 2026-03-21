@@ -37,21 +37,21 @@ Copy the `skills/` directory into your project's `.cursor/skills/`, or install g
 
 ```bash
 # Clone and symlink
-git clone https://github.com/YOUR_USERNAME/devstart.git ~/devstart
+git clone https://github.com/phalconVee/devstart.git ~/devstart
 ln -s ~/devstart/skills/* ~/.cursor/skills/
 ```
 
 ### Claude Code (Plugin Marketplace)
 
 ```
-/plugin marketplace add YOUR_USERNAME/devstart
+/plugin marketplace add phalconVee/devstart
 /plugin install devstart@devstart
 ```
 
 ### Codex / OpenCode
 
 ```bash
-npx skills add YOUR_USERNAME/devstart
+npx skills add phalconVee/devstart
 ```
 
 ## Usage
