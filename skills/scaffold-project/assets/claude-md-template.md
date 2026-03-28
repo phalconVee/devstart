@@ -19,10 +19,13 @@
 - `mockups/` — Figma exports or HTML mockups (if provided)
 - `.cursor/rules/` — Cursor rules (auto-generated, edit as needed)
 - `.cursorignore` — Files excluded from Cursor indexing
+{{REPO_STRUCTURE_EXTRAS}}
 - `{{DEPLOY_DIR}}/` — Deployment scripts and config
 
 ## Conventions
 {{CONVENTIONS}}
+
+{{FRONTEND_DESIGN_SECTION}}
 
 ## Deployment
 {{DEPLOYMENT_NOTES}}

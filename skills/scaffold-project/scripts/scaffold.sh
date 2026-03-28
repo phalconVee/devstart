@@ -92,6 +92,12 @@ fi
 
 cd "$PROJECT_NAME"
 
+# Bundui design reference (react-vite only)
+if [ "$STACK" = "react-vite" ]; then
+  mkdir -p docs
+  cp "$SKILL_ROOT/references/design-system-shadcn-bundui.md" docs/frontend-design-system.md
+fi
+
 # ── Generate project-context.mdc ──
 cp "$SKILL_ROOT/assets/cursor-rules/project-context.mdc" .cursor/rules/project-context.mdc
 
@@ -215,6 +221,14 @@ else
   DEPLOY_DIR="."
 fi
 
+# CLAUDE.md extras for React + Vite (Bundui design kits)
+REPO_EXTRAS=""
+FRONTEND_BLOCK=""
+if [ "$STACK" = "react-vite" ]; then
+  REPO_EXTRAS=$'- `docs/frontend-design-system.md` — Bundui Cosmic + Dashboard kit references for UI work\n'
+  FRONTEND_BLOCK=$(printf '\n%s\n' "$(cat "$SKILL_ROOT/assets/frontend-design-claude-section.md")")
+fi
+
 # ── Extract data model from PRD ──
 # Simple extraction: grab everything between "## Data Model" and the next "##"
 DATA_MODEL=$(sed -n '/^## Data Model/,/^## /{/^## Data Model/d;/^## /d;p;}' PRD.md)
@@ -251,10 +265,11 @@ $(echo -e "$KEY_COMMANDS")
 - \`mockups/\` — Figma exports or HTML mockups (if provided)
 - \`.cursor/rules/\` — Cursor rules (auto-generated, edit as needed)
 - \`.cursorignore\` — Files excluded from Cursor indexing
-- \`${DEPLOY_DIR}/\` — Deployment scripts and config
+${REPO_EXTRAS}- \`${DEPLOY_DIR}/\` — Deployment scripts and config
 
 ## Conventions
 ${CONVENTIONS}
+${FRONTEND_BLOCK}
 EOF
 
 # Symlink for Codex/OpenCode compatibility

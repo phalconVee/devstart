@@ -82,6 +82,11 @@ If unsure about either stack or deploy target, ask the user.
 
 Load the matching reference: `references/stack-<detected-stack>.md`
 
+If the detected stack is **react-vite**, also load
+`references/design-system-shadcn-bundui.md` when generating frontend rules and
+`CLAUDE.md`. It defines Bundui Cosmic (landing) and Dashboard kit references
+and differentiation rules (visual branding + structural/IA).
+
 ### Step 2: Create the Project Directory
 
 Create the project folder with this structure:
@@ -95,6 +100,7 @@ Create the project folder with this structure:
 ├── .gitignore                      # Stack-appropriate ignores
 ├── .cursorignore                   # Exclude vendor/build/env from Cursor indexing
 ├── mockups/                        # User's mockups (if provided)
+├── docs/                           # react-vite only: frontend-design-system.md (Bundui refs)
 ├── .cursor/
 │   └── rules/
 │       ├── project-context.mdc     # Always-on: read PRD first
@@ -117,8 +123,19 @@ fields with values extracted from the PRD:
 - `{{CONVENTIONS}}` — paste the Conventions section from the PRD verbatim
 - `{{DEPLOY_DIR}}` — railway/, or . for vercel.json/eas.json at root
 - `{{DEPLOYMENT_NOTES}}` — brief summary of deploy architecture from reference
+- `{{REPO_STRUCTURE_EXTRAS}}` — For **react-vite**: a single markdown list line
+  (newline after previous bullet) `- \`docs/frontend-design-system.md\` — Bundui Cosmic + Dashboard kit references for UI work`. For all other stacks: empty (no extra line).
+- `{{FRONTEND_DESIGN_SECTION}}` — For **react-vite**: paste the full contents of
+  `assets/frontend-design-claude-section.md` (including the `##` heading). For
+  all other stacks: empty string (remove stray blank lines before `## Deployment` if needed).
 
 Create AGENTS.md as a symlink to CLAUDE.md for Codex/OpenCode compatibility.
+
+### Step 3b: Copy frontend design reference (react-vite only)
+
+If the stack is **react-vite**, create `docs/` in the project root and copy
+`references/design-system-shadcn-bundui.md` to
+`docs/frontend-design-system.md` verbatim. Skip this step for other stacks.
 
 ### Step 4: Generate Cursor Rules
 
@@ -233,6 +250,9 @@ configs for each app.
 - **SKILL.md is lean by design.** Detailed stack conventions, deployment configs,
   and cursor rule templates live in `references/` and `assets/`. Load them only
   when the stack is detected. This follows progressive disclosure.
+- **React + Vite UI:** `references/design-system-shadcn-bundui.md` defines Bundui
+  Cosmic + Dashboard kit usage; it is copied to `docs/frontend-design-system.md`
+  in scaffolded projects.
 - **Don't over-scaffold.** Generate config and context files. Do NOT generate
   application source code — that's what the user does in Cursor after opening.
 - **Mockups are optional.** If no mockups directory exists, skip all mockup

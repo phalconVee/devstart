@@ -29,6 +29,7 @@ Content:
 - Zod for form validation and API response validation.
 - Barrel exports (index.ts) for component directories.
 - Lazy-load routes with React.lazy() and Suspense.
+- **UI design system:** Read `docs/frontend-design-system.md` (and the skill reference `references/design-system-shadcn-bundui.md` when working inside DevStart) before building marketing/landing or dashboard UI. **Landing/marketing** → align with [bundui/cosmic](https://github.com/bundui/cosmic). **App shell / dashboard** → align with [bundui/shadcn-ui-kit-dashboard](https://github.com/bundui/shadcn-ui-kit-dashboard). Use shadcn-style primitives consistently; differentiate products via **visual branding** and **structure** (nav, density, IA), not by abandoning the shared system.
 
 ### testing.mdc
 ```yaml
