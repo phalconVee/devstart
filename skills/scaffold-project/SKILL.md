@@ -38,8 +38,10 @@ PRD.md file before proceeding.
 A bash script at `scripts/scaffold.sh` can also perform this scaffolding
 outside of an agent session. Usage:
 ```bash
-./scripts/scaffold.sh <project-name> <path/to/PRD.md> [path/to/mockups/]
+./scripts/scaffold.sh [--no-railway-skill] <project-name> <path/to/PRD.md> [path/to/mockups/]
+# Or: DEVSTART_SKIP_RAILWAY_SKILL=1 ./scripts/scaffold.sh myapp PRD.md
 ```
+See **Step 8b** for skipping the Railway companion skill without a flag (PRD phrases).
 
 ## Process
 
@@ -54,6 +56,16 @@ Read the PRD and extract:
 - **Data model**: All models with fields, types, relationships
 - **Features list**: Each feature with routes, views, acceptance criteria
 - **Conventions**: Coding standards the user defined
+- **Skip Railway companion skill** (optional): If true, do **not** run
+  `npx skills add railwayapp/railway-skills` during Step 8b. Set when **any** of:
+  - User passes **`--no-railway-skill`** or **`--skip-railway-skill`** to `scripts/scaffold.sh`
+  - Environment **`DEVSTART_SKIP_RAILWAY_SKILL`** is `1`, `true`, or `yes`
+  - PRD contains (case-insensitive) one of:
+    - `DevStart: skip railway skill`
+    - `skip railway companion skill`
+    - `skip installing railway skill` / `skip install railway skill`
+    - `railway companion skill: no` / `false` / `skip`
+  Still generate **`deployment.mdc`** with the Railway CLI runbook; only the skill install is skipped.
 
 **Stack detection priority order** (check top to bottom, first match wins):
 
@@ -152,8 +164,12 @@ frontmatter (with correct `globs` for that stack's file extensions) and
 the conventions content. Generate the .mdc file from this.
 
 **deployment.mdc** (auto-attached by glob on deploy config files):
-Read the detected stack's reference file. Extract the `deployment.mdc` section.
-Set deploy target name in the content. Use these globs:
+Read the detected stack's reference file. Extract the `deployment.mdc` section
+(frontmatter + stack-specific bullets). Set deploy target name in the content.
+**Then append** the full contents of `assets/cursor-rules/railway-cli-runbook.md`
+after a blank line. That file is the shared **Railway CLI runbook** (CLI install
+through verify). It complements **project-specific** notes (e.g. Laravel
+4-service layout, `railway.toml` build commands). Use these globs:
 ```yaml
 globs:
   - "railway/**"
@@ -204,6 +220,24 @@ comments explaining each variable.
 Read the `.gitignore` content from the stack reference. Write it to the
 project root.
 
+### Step 8b: Install Railway companion skill (optional)
+
+If **Step 1** determined **Skip Railway companion skill** is true, **skip this entire
+step** (no `npx skills add`). Still append **## Railway companion skill** to
+**CLAUDE.md** explaining it was skipped by flag, env, or PRD, and that the user may
+run `npx skills add railwayapp/railway-skills --yes` manually.
+
+Otherwise, from the **project root** (after all files exist, before `git init`), attempt:
+
+```bash
+npx skills add railwayapp/railway-skills --yes
+```
+
+Use **`--yes`** so the skills CLI does not block on an interactive agent picker.
+
+- If the command succeeds, the scaffolded repo can use **`railwayapp/railway-skills`** for Railway CLI depth (troubleshooting, logs, edge cases).
+- If `npx` or the skills CLI is unavailable, **exit silently** (do not fail the scaffold). Note in the **Step 10** user summary: install manually with `npx skills add railwayapp/railway-skills --yes`. **CLAUDE.md** should record success, manual install hint, or explicit PRD/flag/env skip.
+
 ### Step 9: Initialize Git
 
 ```bash
@@ -217,6 +251,7 @@ git commit -m "chore: scaffold project from PRD via devstart"
 Print a summary:
 - Project name and path
 - Detected stack and deploy target
+- **Railway companion skill:** skipped by user (flag/env/PRD), auto-installed, failed (manual `npx skills add railwayapp/railway-skills --yes`), as applicable
 - List of all generated files
 - Suggested next step: `cursor <project-name>/`
 - Suggested first prompt to give the Cursor agent:
@@ -260,3 +295,10 @@ configs for each app.
 - **The PRD is sacred.** Copy it in verbatim. Never modify the user's PRD.
 - **Ask when ambiguous.** If the PRD mentions two frameworks or an unsupported
   deploy target, ask rather than guess.
+- **Railway:** Generated `deployment.mdc` embeds the **Railway CLI runbook**
+  (`assets/cursor-rules/railway-cli-runbook.md`) plus stack-specific deploy notes.
+  **`railwayapp/railway-skills`** (optional; Step 8b runs `npx skills add … --yes`
+  unless skipped via **flag**, **`DEVSTART_SKIP_RAILWAY_SKILL`**, or **PRD** — see Step 1)
+  carries general Railway knowledge; the runbook + `railway/` / `railway.toml`
+  carry **this repo’s** commands and architecture. Either layer alone is usable;
+  both together is smoothest.

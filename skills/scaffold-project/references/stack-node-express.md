@@ -65,6 +65,7 @@ Content:
 - Start command: `node dist/index.js` (after `npm run build`).
 - Use $PORT env var. Never hardcode the port.
 - Health check: implement GET /health returning 200.
+- **Cursor rule body:** After the bullets above, append the full contents of `assets/cursor-rules/railway-cli-runbook.md` from the scaffold-project skill. Companion: `railwayapp/railway-skills` (`npx skills add railwayapp/railway-skills --yes`).
 
 ## Deployment Config Files
 

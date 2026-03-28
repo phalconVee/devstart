@@ -1,7 +1,13 @@
 #!/bin/bash
 # DevStart Scaffold Script
 # Standalone version of the scaffold-project skill.
-# Usage: ./scaffold.sh <project-name> <path/to/PRD.md> [path/to/mockups/]
+# Usage: ./scaffold.sh [--no-railway-skill] <project-name> <path/to/PRD.md> [path/to/mockups/]
+#
+# Skip installing railwayapp/railway-skills into the new repo:
+#   --no-railway-skill | --skip-railway-skill   CLI flag
+#   DEVSTART_SKIP_RAILWAY_SKILL=1|true|yes      environment variable
+#   PRD phrases (case-insensitive), e.g. "DevStart: skip railway skill" or
+#   "skip railway companion skill" — see skills/scaffold-project/SKILL.md Step 1
 #
 # This script does the same thing the skill does inside Cursor/Claude Code,
 # but can be run directly from a terminal. Useful for CI, quick bootstrapping,
@@ -9,16 +15,40 @@
 
 set -euo pipefail
 
-PROJECT_NAME="${1:?Usage: scaffold.sh <project-name> <path/to/PRD.md> [path/to/mockups/]}"
-PRD_PATH="${2:?Usage: scaffold.sh <project-name> <path/to/PRD.md> [path/to/mockups/]}"
-MOCKUPS_PATH="${3:-}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SKILL_ROOT="$(dirname "$SCRIPT_DIR")"
+
+SKIP_RAILWAY_SKILL=0
+case "${DEVSTART_SKIP_RAILWAY_SKILL:-}" in
+  1|true|TRUE|yes|YES) SKIP_RAILWAY_SKILL=1 ;;
+esac
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --no-railway-skill|--skip-railway-skill) SKIP_RAILWAY_SKILL=1; shift ;;
+    -h|--help)
+      echo "Usage: scaffold.sh [--no-railway-skill] <project-name> <path/to/PRD.md> [path/to/mockups/]"
+      echo "Env: DEVSTART_SKIP_RAILWAY_SKILL=1 to skip Railway companion skill install."
+      exit 0
+      ;;
+    *) break ;;
+  esac
+done
+
+PROJECT_NAME="${1:?Usage: scaffold.sh [--no-railway-skill] <project-name> <path/to/PRD.md> [path/to/mockups/]}"
+PRD_PATH="${2:?Usage: scaffold.sh [--no-railway-skill] <project-name> <path/to/PRD.md> [path/to/mockups/]}"
+MOCKUPS_PATH="${3:-}"
 
 # ── Validate ──
 if [ ! -f "$PRD_PATH" ]; then
   echo "Error: PRD not found at $PRD_PATH"
   exit 1
+fi
+
+# PRD opt-out (source file, before copy)
+prd_lc=$(tr '[:upper:]' '[:lower:]' < "$PRD_PATH")
+if echo "$prd_lc" | grep -qE 'devstart[[:space:]]*:[[:space:]]*skip[[:space:]]+railway[[:space:]]+skill|skip[[:space:]]+railway[[:space:]]+companion[[:space:]]+skill|skip[[:space:]]+install(ing)?[[:space:]]+railway[[:space:]]+skill|railway[[:space:]]+companion[[:space:]]+skill[[:space:]]*:[[:space:]]*(no|false|skip)'; then
+  SKIP_RAILWAY_SKILL=1
 fi
 
 if [ -d "$PROJECT_NAME" ]; then
@@ -191,8 +221,9 @@ alwaysApply: false
 - Run the test suite after every change. See CLAUDE.md for the test command.
 RULE
 
-  # Generate deployment.mdc
-  cat > .cursor/rules/deployment.mdc << RULE
+  # Generate deployment.mdc (stack-specific deep notes live in references/ when using the full skill)
+  {
+    cat << RULE
 ---
 description: Deployment config for ${DEPLOY_TARGET}. Auto-attached on deploy files.
 globs:
@@ -210,7 +241,12 @@ Deploy target: ${DEPLOY_TARGET}.
 NEVER commit .env files. Use .env.example as the template.
 All secrets go in the deployment platform's dashboard, not in code.
 See CLAUDE.md and the deploy reference files for exact steps.
+Companion skill (optional): \`railwayapp/railway-skills\` — general Railway CLI and troubleshooting; scaffold may have run \`npx skills add railwayapp/railway-skills --yes\`.
+
 RULE
+    echo ""
+    cat "$SKILL_ROOT/assets/cursor-rules/railway-cli-runbook.md"
+  } > .cursor/rules/deployment.mdc
 
   # Generate .cursorignore
   echo -e "$CURSORIGNORE" > .cursorignore
@@ -485,6 +521,20 @@ GIT
     ;;
 esac
 
+# ── Companion skill: Railway (optional, before git commit) ──
+if [ "$SKIP_RAILWAY_SKILL" = "1" ]; then
+  RAILWAY_SKILL_BLURB='Railway companion skill install was **skipped** (CLI flag, `DEVSTART_SKIP_RAILWAY_SKILL`, or PRD opt-out). Optional: `npx skills add railwayapp/railway-skills --yes`. The Railway CLI runbook remains in `.cursor/rules/deployment.mdc`.'
+else
+  RAILWAY_SKILL_BLURB='Run `npx skills add railwayapp/railway-skills --yes` once for Railway-focused agent help (auto-install skipped or failed).'
+  if command -v npx >/dev/null 2>&1; then
+    # --yes avoids interactive agent picker (hangs in CI / scaffold)
+    if npx skills add railwayapp/railway-skills --yes 2>/dev/null; then
+      RAILWAY_SKILL_BLURB='Companion skill `railwayapp/railway-skills` was added with `npx skills add --yes` during scaffold.'
+    fi
+  fi
+fi
+printf '\n## Railway companion skill\n%s\n' "$RAILWAY_SKILL_BLURB" >> CLAUDE.md
+
 # ── Init git ──
 git init -q
 git add -A
@@ -500,6 +550,7 @@ echo "  Project:  $PROJECT_NAME"
 echo "  Stack:    $STACK"
 echo "  Deploy:   $DEPLOY_TARGET"
 echo "  Mockups:  $MOCKUP_COUNT files"
+echo "  Railway companion skill: $RAILWAY_SKILL_BLURB"
 echo ""
 echo "  Generated files:"
 find . -not -path './.git/*' -not -path './.git' -type f | sort | sed 's/^/    /'

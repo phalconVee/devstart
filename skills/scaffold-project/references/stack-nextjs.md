@@ -67,6 +67,7 @@ Content:
 - Env vars: set in Vercel dashboard or `railway variables`.
 - Use `NEXT_PUBLIC_` prefix for client-side env vars.
 - Never expose server secrets with NEXT_PUBLIC_ prefix.
+- **Cursor rule body:** After the bullets above, append the full contents of `assets/cursor-rules/railway-cli-runbook.md` from the scaffold-project skill (use when deploying to Railway; Vercel flows stay dashboard/CLI as usual). Companion: `railwayapp/railway-skills` (`npx skills add railwayapp/railway-skills --yes`).
 
 ## Deployment Config Files
 

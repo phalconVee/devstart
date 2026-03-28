@@ -13,7 +13,8 @@ No orchestration layers. No dashboards. Just you and your editor.
 3. DevStart detects your tech stack and generates:
    - `.cursor/rules/*.mdc` — auto-attached rules for your stack
    - `CLAUDE.md` — project context for the agent
-   - Deployment config (Railway scripts, Dockerfiles, Vercel config)
+   - Deployment config (Railway scripts, Dockerfiles, Vercel config) and a **Railway CLI runbook** inside `deployment.mdc`
+   - Optional: `npx skills add railwayapp/railway-skills --yes` during scaffold (companion Railway CLI skill; `--yes` avoids interactive prompts). **Opt out** with `scaffold.sh --no-railway-skill`, `DEVSTART_SKIP_RAILWAY_SKILL=1`, or PRD lines like `DevStart: skip railway skill` (runbook in `deployment.mdc` is still included).
    - `.env.example` with all required variables
    - `.gitignore` appropriate for your stack
 4. You open the folder in Cursor and start building
@@ -60,30 +61,93 @@ npx skills add phalconVee/devstart
 
 Use the included template (`skills/scaffold-project/assets/prd-template.md`) or write your own. At minimum, include: project name, tech stack, data model, and features.
 
-### 2. Scaffold
+### 2. Invoke the scaffold skill
 
-In Cursor's agent or Claude Code:
+Use any of the patterns below (Cursor, Claude Code, or the shell script). The agent follows `skills/scaffold-project/SKILL.md`; the script mirrors the same flow.
 
-```
-Scaffold a new project from @PRD.md
-```
+### 3. Build in the new folder
 
-Or with mockups:
+Open the generated directory and continue with your stack (install deps, migrations, tests).
 
-```
-Scaffold a project from @PRD.md — mockups are in the /mockups folder
-```
+---
 
-### 3. Build
+### Examples (once the skill is installed)
 
-The scaffolded project is pre-configured. Your first prompt in the new project:
+**Cursor or Claude Code — PRD file in the repo**
 
 ```
-Read @PRD.md and @CLAUDE.md. Set up the project based on the PRD:
-install dependencies, create the data model, and run the initial migration.
+Scaffold a new project from @PRD.md. Use the devstart scaffold-project skill.
 ```
 
-Then iterate feature by feature from your PRD.
+```
+Bootstrap from this PRD: @docs/PRD.md — project name should be "invoice-app".
+```
+
+```
+I have @requirements/PRD.md ready. Set up a new project folder with Cursor rules and deploy config for the stack described there.
+```
+
+**With mockups**
+
+```
+Scaffold a project from @PRD.md. Design reference files are in ./mockups — include them in the scaffolded project.
+```
+
+**Inline requirements (no PRD file yet)**
+
+```
+Scaffold a new Laravel + Railway project. First write PRD.md from this description: [paste product brief]. Then run the full scaffold from that PRD.
+```
+
+```
+Create PRD.md for a React + Vite SPA with Postgres API on Railway, then scaffold the project using DevStart.
+```
+
+**Name and location explicit**
+
+```
+Use scaffold-project to create ~/Projects/bookmarks-app/ from @PRD.md. Do not modify the PRD text — copy it verbatim.
+```
+
+**Skip Railway companion skill (PRD-driven)**
+
+Add a line to your PRD such as `DevStart: skip railway skill` (see the PRD template), then:
+
+```
+Scaffold from @PRD.md
+```
+
+The agent reads the PRD and skips `npx skills add` for Railway skills while still generating `deployment.mdc` with the CLI runbook.
+
+**Bash script (no agent)**
+
+From the DevStart repo (or with `SKILL_ROOT` pointing at `skills/scaffold-project`):
+
+```bash
+./skills/scaffold-project/scripts/scaffold.sh my-saas ./PRD.md
+./skills/scaffold-project/scripts/scaffold.sh my-saas ./PRD.md ./mockups/
+```
+
+Skip installing `railwayapp/railway-skills` into the new repo:
+
+```bash
+./skills/scaffold-project/scripts/scaffold.sh --no-railway-skill my-saas ./PRD.md
+DEVSTART_SKIP_RAILWAY_SKILL=1 ./skills/scaffold-project/scripts/scaffold.sh my-saas ./PRD.md
+```
+
+**First prompt inside the scaffolded project**
+
+```
+Read @PRD.md and @CLAUDE.md. Install dependencies, create the data model from the PRD, run migrations, and verify with the test command from CLAUDE.md.
+```
+
+```
+Open @PRD.md Feature 1. Implement it end-to-end and satisfy the acceptance criteria.
+```
+
+**Codex / OpenCode (skills already added via `npx skills add phalconVee/devstart`)**
+
+Use the same natural-language scaffolds as above; reference your PRD path and ask to use the **scaffold-project** skill so the agent loads `SKILL.md`.
 
 ## Project Structure
 
@@ -147,7 +211,7 @@ Fork this repo and modify:
 
 These pair well with DevStart:
 
-- **[Railway Skills](https://github.com/railwayapp/railway-skills)** — Railway CLI deployment
+- **[Railway Skills](https://github.com/railwayapp/railway-skills)** — Railway CLI deployment (DevStart attempts `npx skills add railwayapp/railway-skills --yes` when scaffolding; `deployment.mdc` also embeds a full CLI runbook)
 - **[Laravel Specialist](https://skills.sh/jeffallan/claude-skills/laravel-specialist)** — Deep Laravel expertise
 - **[Vercel Agent Skills](https://github.com/vercel-labs/agent-skills)** — Vercel deployment
 - **[Engineering Workflow](https://github.com/mhattingpete/claude-skills-marketplace)** — Git automation, test fixing

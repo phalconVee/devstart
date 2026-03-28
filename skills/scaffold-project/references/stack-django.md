@@ -71,6 +71,7 @@ Content:
 - Use dj-database-url to parse DATABASE_URL.
 - WhiteNoise for static files in production.
 - Never use `DEBUG=True` in production.
+- **Cursor rule body:** After the bullets above, append the full contents of `assets/cursor-rules/railway-cli-runbook.md` from the scaffold-project skill. Companion: `railwayapp/railway-skills` (`npx skills add railwayapp/railway-skills --yes`).
 
 ## Deployment Config Files
 

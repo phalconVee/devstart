@@ -70,6 +70,7 @@ Content:
 - Vercel: auto-detected as Vite project.
 - API URL: use `VITE_` prefix for env vars exposed to the browser.
 - For SSR/API: pair with a backend service on Railway.
+- **Cursor rule body:** After the bullets above, append the full contents of `assets/cursor-rules/railway-cli-runbook.md` from the scaffold-project skill. Companion: `railwayapp/railway-skills` (`npx skills add railwayapp/railway-skills --yes`).
 
 ## Deployment Config Files
 

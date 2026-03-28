@@ -66,6 +66,7 @@ Content:
 - NEVER commit .env. Use .env.example as template.
 - LOG_CHANNEL=stderr (Railway has ephemeral filesystem).
 - Railway does NOT support docker-compose.
+- **Cursor rule body:** After the bullets above, append the full contents of `assets/cursor-rules/railway-cli-runbook.md` from the scaffold-project skill (Railway CLI login → deploy → verify). Companion: `railwayapp/railway-skills` (`npx skills add railwayapp/railway-skills --yes`).
 
 ## Deployment Config Files
 

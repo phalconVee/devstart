@@ -53,6 +53,7 @@ User: (default auth user model)
 - **Target**: [Railway / Vercel / EAS / etc.]
 - **Services**: [e.g., App + Worker + Cron + Postgres]
 - **Key env vars**: [List them with descriptions]
+- **DevStart** (optional): To scaffold without installing the Railway companion skill into the repo, add a line such as **`DevStart: skip railway skill`** or **`skip railway companion skill`** (see scaffold-project SKILL Step 1). The Railway CLI runbook in Cursor rules is still generated.
 
 ## Conventions
 - [e.g., Form Requests for validation, never validate in controllers]

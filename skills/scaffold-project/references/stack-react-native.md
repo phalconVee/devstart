@@ -65,6 +65,7 @@ Content:
 - OTA updates with EAS Update: `eas update --branch production`.
 - app.json / app.config.ts is the single source of app configuration.
 - Never hardcode API URLs. Use environment-specific config via `eas.json` profiles.
+- **Backend on Railway:** If the PRD includes an API deployed to Railway, append `assets/cursor-rules/railway-cli-runbook.md` from the scaffold-project skill to `deployment.mdc` for the **API** subproject (or shared deploy rule). Companion: `railwayapp/railway-skills` (`npx skills add railwayapp/railway-skills --yes`).
 
 ## Deployment Config Files
 
