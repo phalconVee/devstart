@@ -1,7 +1,59 @@
 # [Project Name] — PRD
 
+> **How to use this template:** Fill sections that matter for *this* product. Empty sections are fine to leave as placeholders or delete—keep **Mission**, **Tech Stack**, and **Features** substantive so scaffolding and agents have enough signal.
+
 ## Mission
 [One sentence. What does shipped and successful look like?]
+
+## Problem & context
+- **Current state**: [What do people do today without this product? Pain, workarounds, cost.]
+- **Why now**: [Trigger—regulation, scale, market shift, team capacity.]
+- **Constraints**: [Time, budget, compliance, must-integrate systems, “cannot change” rules.]
+
+## Users & stakeholders
+- **Primary users**: [Who uses the product day to day? Role, context, frequency.]
+- **Secondary / buyers**: [Who approves, pays, or administers—if different from primary users.]
+- **Success owner**: [Who decides “we shipped the right thing”?]
+
+## Research & validation
+- **What we already know**: [Interviews, analytics, support tickets, prior experiments—bullet list with dates or links where useful.]
+- **Open questions**: [What we still need to learn during or after v1.]
+- **Methods** (optional): [e.g., 5 usability sessions, beta cohort of N, A/B on onboarding.]
+
+## Voice of customer
+Capture **verbatim** snippets where possible, then synthesize themes.
+
+| Source (who / channel) | Quote or paraphrase | Theme (pain, goal, objection) |
+|--------------------------|---------------------|-------------------------------|
+| [e.g., PM interview, 2026-01] | “[…]” | [e.g., trust / speed / clarity] |
+| | | |
+
+- **Recurring themes**: [3–5 bullets the product must explicitly address.]
+- **Non-negotiables**: [Things users said they will reject or churn over.]
+
+## Competitive & alternatives
+- **Alternatives today**: [Spreadsheets, competitor X, “do nothing,” internal tools.]
+- **Differentiation**: [Why this approach wins for *our* users—not a feature laundry list unless tied to insight above.]
+- **Watch-outs**: [Where competitors are strong or markets are crowded.]
+
+## Gaps, assumptions & risks
+- **Known gaps** (product / UX / data): [What v1 will not solve; honest list.]
+- **Assumptions** (rank: high / medium / low confidence): [e.g., “Users will connect their bank within first session.”]
+- **Risks & mitigations**: [Technical, adoption, legal—each with a one-line mitigation or “TBD”.]
+- **Dependencies**: [Other teams, APIs, third-party approvals, data we don’t control.]
+
+## Success metrics
+- **North star** (optional): [One primary outcome, e.g., weekly active teams completing core job.]
+- **Primary metrics**: [2–4 measurable signals tied to Mission.]
+- **Guardrails**: [What must not get worse—latency, errors, support volume, etc.]
+- **How we’ll measure**: [Tooling, event names, baseline if known.]
+
+## Out of scope / non-goals
+Explicitly list what **this PRD does not commit to** so scope creep is visible.
+
+- [e.g., No native mobile app in v1]
+- [e.g., No multi-tenant admin for partners]
+- [e.g., No migration from LegacySystem X until phase 2]
 
 ## Tech Stack
 - Language/Framework: [e.g., PHP 8.3 / Laravel 11]
